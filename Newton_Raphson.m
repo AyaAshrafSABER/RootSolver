@@ -10,6 +10,7 @@ error_message = "";
 root = 0;
 columnNames = {};
 plot = diff(equation);
+ezplot(plot);
 xi = intial_point; 
 %put the result of every iteration in the matrix%
 matrix_reslut = zeros(max_iterations,6);
