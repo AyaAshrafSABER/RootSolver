@@ -48,4 +48,8 @@ end
       matrix_reslut(i,j) = matrix (i,j);
       end
  end
+ y= matrix_reslut(:,3);
+ disp(y);
+ x= matrix_reslut(:,2);
+  plot(x,y,'o');
  end
