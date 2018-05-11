@@ -1,4 +1,4 @@
-function [root,num_of_iterations,columnNames,matrix_reslut,absolute_error,plot,error_message] = Newton_Raphson(equation,max_iterations, epsilon,intial_point)
+function [error_message,root] = Newton_Raphson(equation,max_iterations, epsilon,intial_point)
 %to display long number%
 format long;
 eq_derivative = @(x) diff(equation);
@@ -10,7 +10,7 @@ error_message = "";
 root = 0;
 columnNames = {};
 plot = diff(equation);
-ezplot(plot);
+%ezplot(plot);
 xi = intial_point; 
 %put the result of every iteration in the matrix%
 matrix_reslut = zeros(max_iterations,6);
@@ -49,7 +49,6 @@ end
       end
  end
  y= matrix_reslut(:,3);
- disp(y);
+ %disp(y);
  x= matrix_reslut(:,2);
-  plot(x,y,'o');
  end

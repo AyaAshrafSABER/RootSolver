@@ -154,7 +154,7 @@ timeEdit.Value=time;
 end
 function nextButtonPushed(z,ax,tableN,tableB)
 global X1 X2 index roots flag btnRslt
-global second index1 index2
+global second index1 index2 btnNext
 btnRslt.Visible='off';
 Y1 = subs(z,X1);
 Y2= subs(z,X2);
@@ -215,6 +215,8 @@ if((X2<second))
     X2=X2+.1;%delta
     Y1 = subs(z,X1);
     Y2= subs(z,X2);
+else
+    btnNext.Enable='off';
 end
 end
 function clear()
