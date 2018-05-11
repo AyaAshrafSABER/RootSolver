@@ -4,26 +4,43 @@ classdef Bisection < handle
         req_iteration_number;
         ml1
         ml2
+        num_of_iter = 0;
     end
     methods
+        function base_algorithm(obj,f, var, xl_init, xu_init, maxi, es, mode)
+         now = tic();
+            [itr, xl, xu, xr, errs, d, root_exist] = obj.execute(f, xl_init, xu_init, maxi,es);
+            [ax, view, table, next_btn] = obj.create_result_view(f, var, itr, xl, xu, xr, errs, d);
+            err = obj.display_msg(root_exist, xl_init, xu_init, view, xr(length(itr)));
+%             if (err == 0)
+                if (mode == "fast")
+                    obj.display_all_result(itr, xl, xu, xr, errs, d, ax, table);
+                elseif (mode == "single")
+                    next_btn.Visivle = 'on';
+                    obj.current_row = 1;
+                else %file
+                    fast_btn = uibutton(view,'push', 'Position', [800 900 100 50], 'Text', 'FAST MODE', 'ButtonPushedFcn', @(fast_btn,event) obj.FastButtonPushed(table, itr, xl, xu, xr, errs, d, ax, next_btn));
+                    slow_btn = uibutton(view ,'push', 'Position', [1000 900 120 50], 'Text', 'SINGLE STEP MODE', 'ButtonPushedFcn', @(slow_btn, event) obj.SlowButtonPushed(next_btn)); 
+                end
+%             end
+            wholeTime = toc(now);
+            obj.display_execution_time(wholeTime, view);
+        end
+        function FastButtonPushed(obj,table, itr, xl, xu, xr, errs, d, ax, nextbtn)
+            nextbtn.Visible = 'off';
+            obj.display_all_result(itr, xl, xu, xr, errs, d, ax, table);
+        end
+        
+        function SlowButtonPushed(obj,next_btn)
+            next_btn.Visible = 'on';
+            obj.current_row = 1;
+        end
         function solve(obj, eq_as_str, mode)
             f = evalin(symengine, eq_as_str);
             symbols = symvar(f);
             [xl_init, xu_init, maxi,es] = obj.getRequirements();
             if(maxi ~= -1)
-                now = tic();
-                [itr, xl, xu, xr, errs, d, root_exist] = obj.execute(f, xl_init, xu_init, maxi,es);
-                [ax, view, table] = obj.create_result_view(f, symbols(1), mode, itr, xl, xu, xr, errs, d);
-                err = obj.display_msg(root_exist, xl_init, xu_init, view, xr(length(itr)));
-    %             if (err == 0)
-                    if (mode == "fast")
-                        obj.display_all_result(itr, xl, xu, xr, errs, d, ax, table);
-                    else
-                        obj.current_row = 1;
-                    end
-    %             end
-                wholeTime = toc(now);
-                obj.display_execution_time(wholeTime, view);
+               obj.base_algorithm(f, symbols(1), xl_init, xu_init, maxi, es, mode);
             end 
         end
         function [iteration_number, xl, xu, xr, errors, d, root_exist] = execute(obj,f, lower, upper, imax, es)
@@ -35,6 +52,7 @@ classdef Bisection < handle
            xr = zeros(1, imax);
            xl = zeros(1, imax);
            xu = zeros(1, imax);
+           d = zeros(1, imax);
            iteration_number = zeros(1, imax);
            errors = zeros(1, imax);
            root_exist = obj.check_convergence(f, lower, upper);
@@ -78,7 +96,6 @@ classdef Bisection < handle
                         xu(i + 1) = xr(i);
                         xl(i + 1) = xl(i);
                    end
-                  
                else
                    if ( i ~= imax)
                        xl(i + 1) = xr(i);
@@ -93,6 +110,7 @@ classdef Bisection < handle
                end
                i = i + 1;
            end
+           obj.num_of_iter = i - 1;
         end
         function [xl, xu, maxi, es] = getRequirements(obj)
             prompt = {'Lower bound', 'Upper bound','Maximum number of iterations', 'Relative error tolerance'};
@@ -104,10 +122,10 @@ classdef Bisection < handle
                 [msg, xl, xu, maxi, es] = obj.validate_input(answer);
                 if (msg ~= "")
                      errordlg(msg);
-                     maxi = -1;
                 end
              else
-                x0 = 0;
+                xl = 0;
+                xu = 0;
                 es = 0;
                 maxi = -1;
             end
@@ -141,7 +159,7 @@ classdef Bisection < handle
                 root_exist = 1;
             end
         end
-        function [ax, result_view, result_t] = create_result_view(obj, f, variable, mode, itr, xl, xu, xr, errs, d)
+        function [ax, result_view, result_t, next_btn] = create_result_view(obj, f, variable, itr, xl, xu, xr, errs, d)
             result_view = uifigure('Name', 'Result view', 'Color', [0 0.6 0.6], 'Position' , [0 0 2000 1000]);
             ax = uiaxes('Parent', result_view, 'Position', [50 50 600 700]);
             ax.XGrid = 'on';
@@ -151,24 +169,22 @@ classdef Bisection < handle
             ax.Title.String = 'Result plot';
             fplot(ax, variable, f, [xl(1) xu(1)], 'r-', 'LineWidth', 2);
             zoom(ax, 'on');
-            result_t = uitable('Parent', result_view,'Position', [800 700 800 300] ,'ColumnName',{'Iteration number'; 'Xl(i)'; 'Xu(i)'; 'Xr(i)'; '|Error%|'; 'f(Xr(i))'});
+            result_t = uitable('Parent', result_view,'Position', [800 100 800 700] ,'ColumnName',{'Iteration number'; 'Xl(i)'; 'Xu(i)'; 'Xr(i)'; '|Error%|'; 'f(Xr(i))'});
             result_t.Visible = 'off';
             next_btn = uibutton(result_view, 'push', 'Position', [50 900 120 50], 'Text', 'NEXT ITERATION', 'ButtonPushedFcn', @(next_btn,event) obj.NextButtonPushed(result_t, itr, xl, xu, xr, errs, d, ax));
-            if (mode == "fast")
-                next_btn.Visible = 'off';
-            end
+            next_btn.Visible = 'off';
         end
         function display_all_result(obj, itr, xl, xu, xr, errs, d, ax, table)
             res_data = [itr(:), xl(:), xu(:), xr(:), errs(:), d(:)];
             res_data = double(res_data);
-            table.Data = res_data;
+            set(table, 'Data', res_data);
             table.Visible = 'on';
             ax.NextPlot = 'add';
-             l1 = plot(ax, [xl(1) xl(1)], get(ax, 'YLim'), 'k--');
-             l2 = plot(ax, [xu(1) xu(1)], get(ax, 'YLim'), 'k--');
-             pause(0.5)
+            l1 = plot(ax, [xl(1) xl(1)], get(ax, 'YLim'), 'k--');
+            l2 = plot(ax, [xu(1) xu(1)], get(ax, 'YLim'), 'k--');
+            pause(0.5)
             i = 2;
-            while (i <= length(itr))
+            while (i <= obj.num_of_iter)
                  delete(l1);
                  delete(l2);
                  ax.NextPlot = 'add';
@@ -179,22 +195,24 @@ classdef Bisection < handle
             end
         end
         function NextButtonPushed(obj, table, itr, xl, xu, xr, errs, d, ax)
-            ax.NextPlot = 'add';
-            delete(obj.ml1);
-            delete(obj.ml2);
-            obj.ml1 = plot(ax, [xl(obj.current_row) xl(obj.current_row)], get(ax, 'YLim'), 'k--');
-            obj.ml2 = plot(ax, [xu(obj.current_row) xu(obj.current_row)], get(ax, 'YLim'), 'k--');
-            row = [itr(obj.current_row), xl(obj.current_row), xu(obj.current_row), xr(obj.current_row), errs(obj.current_row), d(obj.current_row)];   
-            row = double(row);
-            if (obj.current_row == 1)
-                set(table, 'Data', row);
-            elseif (obj.current_row <= length(itr))
-                oldData = get(table,'Data');
-                oldData(end + 1, :) = row;
-                set(table, 'Data', oldData);
+            if ~(obj.current_row > obj.num_of_iter)
+                ax.NextPlot = 'add';
+                delete(obj.ml1);
+                delete(obj.ml2);
+                obj.ml1 = plot(ax, [xl(obj.current_row) xl(obj.current_row)], get(ax, 'YLim'), 'k--');
+                obj.ml2 = plot(ax, [xu(obj.current_row) xu(obj.current_row)], get(ax, 'YLim'), 'k--');
+                row = [itr(obj.current_row), xl(obj.current_row), xu(obj.current_row), xr(obj.current_row), errs(obj.current_row), d(obj.current_row)];   
+                row = double(row);
+                if (obj.current_row == 1)
+                    set(table, 'Data', row);
+                elseif (obj.current_row <=  obj.num_of_iter)
+                    oldData = get(table,'Data');
+                    oldData(end + 1, :) = row;
+                    set(table, 'Data', oldData);
+                end
+                table.Visible = 'on';
+                obj.current_row = obj.current_row + 1;  
             end
-            table.Visible = 'on';
-            obj.current_row = obj.current_row + 1;  
         end
         function err = display_msg(obj, msg_bool, xl, xu, view, root)
             if (msg_bool == 1)
@@ -206,8 +224,8 @@ classdef Bisection < handle
             end
             str = sprintf(' for initial values: [ %d , %d ]', xl, xu);
             msg = strcat(msg, str);
-            str2 = sprintf('\n Reguired number of iterations = %d', obj.req_iteration_number);
-            msg = strcat(msg, str2);
+            str2 = sprintf('Reguired number of iterations = %d', obj.req_iteration_number);
+            msg = [msg newline str2];
             lab = uilabel('Parent', view, 'Position', [50 750 1000 100]);
             lab.Text = msg;
             lab.FontSize = 14;
@@ -217,6 +235,16 @@ classdef Bisection < handle
             str = sprintf('Total execution time: %f seconds', time);
             lab.Text = str;
             lab.FontSize = 14;
+        end
+        function read_file(obj, func_str, user_input, mode)
+            f = evalin(symengine, func_str);
+            symbols = symvar(f);
+            [msg, xl, xu, maxi, es] = obj.validate_input(user_input);
+             if (msg ~= "")
+                 errordlg(msg);
+             else
+                 obj.base_algorithm(f, symbols(1), xl, xu, maxi, es, mode);
+             end
         end
     end
 end

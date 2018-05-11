@@ -209,7 +209,7 @@ tic;
 timeLbl.Visible='on';
 timeEdit.Visible='on';
 timeEdit.Value=time;
-	                   itrEdit.Value=j;
+	                   itrEdit.Value=j-2;
                        errorEdit.Value=error;
                         lab3.Visible='on';
                        rootEdit.Visible='on';

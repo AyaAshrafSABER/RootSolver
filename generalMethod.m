@@ -12,7 +12,10 @@ second = str2num(second);
 y=string(func);
 z=sym(char(y));
 else
+    try
     fileRead(func,interval,tolerance,maxIter);
+    catch
+    end
 end
 
 %method

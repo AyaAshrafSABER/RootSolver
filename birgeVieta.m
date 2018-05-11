@@ -4,7 +4,8 @@ global AError
 global Xold
 global nomOfIteration 
 global j btnNext btnRslt
-global degree a b c
+global degree a b c 
+
 if(type==0)
 poly = func;
 poly=string(poly);
@@ -16,7 +17,10 @@ Xnew =str2num(first);%getIntialValue();
 AError = str2num(second);
 nomOfIteration =str2num(third);
 else
+    try
     readFile(func,interval,tolerance,maxIter);
+    catch
+    end
 end
 x=linspace(-4,8);
 f1 = polyval(a,x);
@@ -43,9 +47,7 @@ j=1;
  b(1)=a(1);
  c = zeros(degree,0);
  c(1)=a(1);
-
-
-end
+ end
 function readFile(func,interval,tolerance,maxIter)
 global Xnew 
 global AError
@@ -81,17 +83,22 @@ lab2.FontSize = 15;
 XiEdit = uieditfield(uf,'numeric','Position',[1100 550 100 22],'Editable','off');
 XiEdit.FontSize = 15;
 XiEdit.BackgroundColor=[0 0.6 0.6];
-lab3 = uilabel(uf,'Text','root','Position',[800 500 100 32]);
+lab4 = uilabel(uf,'Text','precision Error','Position',[800 500 100 32]);
+lab4.FontSize = 15;
+errorEdit = uieditfield(uf,'numeric','Position',[1100 500 100 22],'Editable','off');
+errorEdit.FontSize = 15;
+errorEdit.BackgroundColor=[0 0.6 0.6];
+lab3 = uilabel(uf,'Text','root','Position',[800 450 100 32]);
 lab3.FontSize = 15;
 lab3.Visible='off';
-rootEdit = uieditfield(uf,'numeric','Position',[1100 500 100 22],'Editable','off');
+rootEdit = uieditfield(uf,'numeric','Position',[1100 450 100 22],'Editable','off');
 rootEdit.FontSize = 15;
 rootEdit.Visible='off';
 rootEdit.BackgroundColor=[0 0.6 0.6];
-btnNext = uibutton(uf,'push','Text', 'Next','Position',[1100, 650, 100, 40],'ButtonPushedFcn', @(btn,event) nextButtonPushed(t,itrEdit,XiEdit,rootEdit));
+btnNext = uibutton(uf,'push','Text', 'Next','Position',[1100, 650, 100, 40],'ButtonPushedFcn', @(btn,event) nextButtonPushed(t,itrEdit,XiEdit,rootEdit,errorEdit));
 btnNext.FontSize = 20;
 btnNext.FontName='Arial';
-btnRslt = uibutton(uf,'push','Text', 'Result','Position',[900, 650, 100, 40],'ButtonPushedFcn',  @(btn,event) resultButtonPushed(t,itrEdit,XiEdit,rootEdit));
+btnRslt = uibutton(uf,'push','Text', 'Result','Position',[900, 650, 100, 40],'ButtonPushedFcn',  @(btn,event) resultButtonPushed(t,itrEdit,XiEdit,rootEdit,errorEdit));
 btnRslt.FontSize = 20;
 btnRslt.FontName='Arial';
 timeLbl = uilabel(uf,'Text','Time consumed ','Position',[875 100 130 32]);
@@ -104,7 +111,7 @@ timeEdit.FontSize = 15;
 timeEdit.FontColor = [1 0 0];
 timeEdit.BackgroundColor=[0 0.6 0.6];
 end
-function nextButtonPushed(t,itrEdit,XiEdit,rootEdit)
+function nextButtonPushed(t,itrEdit,XiEdit,rootEdit,errorEdit)
 global Xnew btnRslt
 global AError
 global Xold btnNext
@@ -129,6 +136,8 @@ catch
 end
  printIteration(t,degree,a,b,c)
  itrEdit.Value=j;
+ error=(abs((Xnew-Xold))/Xnew)*100;
+ errorEdit.Value=error;
  XiEdit.Value=Xnew;
 j=j+1;
 else
@@ -143,7 +152,7 @@ end
  end    
 
 end
-function resultButtonPushed(t,itrEdit,XiEdit,rootEdit)
+function resultButtonPushed(t,itrEdit,XiEdit,rootEdit,errorEdit)
 global Xnew btnNext
 global AError timeLbl
 global Xold timeEdit
@@ -169,6 +178,8 @@ catch
 end 
  printIteration(t,degree,a,b,c)
  pause(1);
+  error=(abs((Xnew-Xold))/Xnew)*100;
+ errorEdit.Value=error;
  itrEdit.Value=j;
  XiEdit.Value=Xnew;
 j=j+1;

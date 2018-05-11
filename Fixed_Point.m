@@ -1,34 +1,46 @@
 classdef Fixed_Point < handle
     properties (SetAccess = 'public', GetAccess = 'public')
         current_row = 0;
+        num_of_iter = 0;
     end
     methods 
+        function base_algorithm(obj, g, var, x0, maxi, es, mode)
+           now = tic();
+            [itr, root, errs, cnv, way] = obj.execute(g, x0, maxi, es, var);
+            [ax, view, table, next_btn] = obj.create_result_view(g, var, itr, root, errs, x0);
+            err = obj.display_msg(cnv, way, x0, view);
+%             if (err == 0)
+                if (mode == "fast")
+                    obj.display_all_result(itr, root, errs, view, ax, x0);
+                elseif (mode == 'single')
+                    next_btn.Visible = 'on';
+                    obj.current_row = 0;
+                else
+                    fast_btn = uibutton(view,'push', 'Position', [800 900 100 50], 'Text', 'FAST MODE', 'ButtonPushedFcn', @(fast_btn,event) obj.FastButtonPushed(table, itr,root, errs, ax, next_btn, x0));
+                    slow_btn = uibutton(view ,'push', 'Position', [1000 900 120 50], 'Text', 'SINGLE STEP MODE', 'ButtonPushedFcn', @(slow_btn, event) obj.SlowButtonPushed(next_btn)); 
+                end
+%             end
+            wholeTime = toc(now);
+            obj.display_execution_time(wholeTime, view); 
+        end
+        function FastButtonPushed(obj, table, itr,root, errs, ax, btn, x0)
+            btn.Visible = 'off';
+            obj.display_all_result(itr, root, errs, ax, x0, table);
+        end
+        function SlowButtonPushed(obj, next_btn)
+            next_btn.Visible = 'on';
+            obj.current_row = 0;
+        end
         function solve(obj, eq_as_str, mode)
             f = evalin(symengine, eq_as_str);
             symbols = symvar(f);
             g = f + symbols(1);
             [x0, maxi, es] = obj.getRequirements();
             if(maxi ~= -1)
-                now = tic();
-                [itr, root, errs, cnv, way] = obj.execute(g, x0, maxi, es, symbols(1));
-                [ax, view] = obj.create_result_view(g, symbols(1), mode, itr, root, errs, x0);
-                err = obj.display_msg(cnv, way, x0, view);
-    %             if (err == 0)
-                    if (mode == "fast")
-                        obj.display_all_result(itr, root, errs, view, ax, x0);
-                    else
-                        obj.current_row = 0;
-                    end
-    %             end
-                wholeTime = toc(now);
-                obj.display_execution_time(wholeTime, view);
+                obj.base_algorithm(g, symbols(1), x0, maxi, es, mode);
             end 
         end
         function [iteration_number, root, errors, cnv, way] = execute(obj,g, initial_guess, max_iterations, es, variable)
-           iteration_number = zeros(1, max_iterations);
-           root = zeros(1, max_iterations);
-           errors = zeros(1, max_iterations);
-           
            xr_old = initial_guess;
            i = 1;
            ea = es + 1;
@@ -51,6 +63,7 @@ classdef Fixed_Point < handle
                 xr_old = xr;
                 i = i + 1;
            end
+           obj.num_of_iter = i - 1;
         end
         function [cnv, way] = check_convergence(obj, g, variable, value)
             df = diff(g, variable);
@@ -99,7 +112,7 @@ classdef Fixed_Point < handle
                 msg = strcat(msg, ' Relative error tolerance must be a number.');
             end
         end
-        function [ax, result_view] = create_result_view(obj, g, variable, mode, itr, roots, errs, x0)
+        function [ax, result_view, result_t, next_btn] = create_result_view(obj, g, variable, itr, roots, errs, x0)
             result_view = uifigure('Name', 'Result view', 'Color', [0 0.6 0.6], 'Position' , [0 0 2000 1000]);
             ax = uiaxes('Parent', result_view, 'Position', [50 50 600 700]);
             ax.XGrid = 'on';
@@ -107,17 +120,15 @@ classdef Fixed_Point < handle
             ax.XAxisLocation = 'origin';
             ax.YAxisLocation = 'origin';   
             ax.Title.String = 'Result plot';
-            fplot(ax, variable, g, [-50 50], 'r-', 'LineWidth', 2);
+            fplot(ax, variable, g, [-10 10], 'r-', 'LineWidth', 2);
             y = variable;
             zoom(ax, 'on');
             ax.NextPlot = 'add';
-            fplot(ax, variable, y, [-50 50], 'b-', 'LineWidth', 2);
-            result_t = uitable('Parent', result_view,'Position', [800 700 800 300] ,'ColumnName',{'Iteration number'; 'X(i)'; '|Error%|'});
+            fplot(ax, variable, y, [-10 10], 'b-', 'LineWidth', 2);
+            result_t = uitable('Parent', result_view,'Position',  [800 100 800 700] ,'ColumnName',{'Iteration number'; 'X(i)'; '|Error%|'});
             result_t.Visible = 'off';
             next_btn = uibutton(result_view, 'push', 'Position', [50 900 120 50], 'Text', 'NEXT ITERATION', 'ButtonPushedFcn', @(next_btn,event) obj.NextButtonPushed(result_t, itr, roots, errs, ax, x0));
-            if (mode == "fast")
-                next_btn.Visible = 'off';
-            end
+            next_btn.Visible = 'off';
         end
         function NextButtonPushed(obj, table, itr, root, errs, ax, x0)
             if (obj.current_row == 0)
@@ -129,7 +140,7 @@ classdef Fixed_Point < handle
                 set(table, 'Data', first_row);
                 table.Visible = 'on';
                 obj.current_row = obj.current_row + 1;  
-            elseif (obj.current_row < length(itr))
+            elseif (obj.current_row < obj.num_of_iter)
                 newRow = [itr(obj.current_row); root(obj.current_row); errs(obj.current_row)];
                 newRow = double(newRow);
                 oldData = get(table,'Data');
@@ -141,7 +152,7 @@ classdef Fixed_Point < handle
                 ax.NextPlot = 'add';
                 plot(ax, [root(obj.current_row) root(obj.current_row + 1)], [root(obj.current_row + 1) root(obj.current_row + 1)], 'k--');
                 obj.current_row = obj.current_row + 1;
-            elseif (obj.current_row == length(itr))
+            elseif (obj.current_row == obj.num_of_iter)
                 newRow = [itr(obj.current_row); root(obj.current_row); errs(obj.current_row)];
                 newRow = double(newRow);
                 oldData = get(table,'Data');
@@ -151,25 +162,26 @@ classdef Fixed_Point < handle
                 obj.current_row = obj.current_row + 1;
             end
         end
-        function display_all_result(obj, itr, root, errs, view, ax, x0)
-            result_t = uitable('Parent', view,'Position', [800 700 800 300] ,'ColumnName',{'Iteration number'; 'X(i)'; '|Error%|'});
+        function display_all_result(obj, itr, root, errs, ax, x0, table)
             first_row = [0, x0, nan];
             first_row = double(first_row);
             res_data = [itr(:), root(:), errs(:)];
             res_data = double(res_data);
             all_data = [first_row; res_data];
-            result_t.Data = all_data;
+            table.Data = all_data;
             ax.NextPlot = 'add';
             plot(ax, [x0 x0], [x0 root(1)], 'k--');
             ax.NextPlot = 'add';
             plot(ax, [x0 root(1)], [root(1) root(1)], 'k--');
+            pause(0.5);
             i = 1;
-            while (i < length(itr))
+            while (i < obj.num_of_iter)
                 ax.NextPlot = 'add';
                 plot(ax, [root(i) root(i)], [root(i) root(i + 1)], 'k--');
                 ax.NextPlot = 'add';
                 plot(ax, [root(i) root(i + 1)], [root(i + 1) root(i + 1)], 'k--');
                 i = i + 1;
+                pause(0.5);
             end
         end
         function err = display_msg(obj, cnv, way, x0, view)
@@ -192,6 +204,17 @@ classdef Fixed_Point < handle
             str = sprintf('Total execution time: %f seconds', time);
             lab.Text = str;
             lab.FontSize = 14;
+        end
+        function read_file(obj, func_str, user_input, mode)
+            f = evalin(symengine, func_str);
+            symbols = symvar(f);
+            g = f + symbols(1);
+            [msg, x0, maxi, es] = obj.validate_input(user_input);
+             if (msg ~= "")
+                 errordlg(msg);
+             else
+                 obj.base_algorithm(g, symbols(1), x0, maxi, es, mode);
+             end
         end
     end
 end
