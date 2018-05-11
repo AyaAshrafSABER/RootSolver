@@ -16,11 +16,11 @@ classdef Bisection < handle
                 if (mode == "fast")
                     obj.display_all_result(itr, xl, xu, xr, errs, d, ax, table);
                 elseif (mode == "single")
-                    next_btn.Visivle = 'on';
+                    next_btn.Visible = 'on';
                     obj.current_row = 1;
                 else %file
                     fast_btn = uibutton(view,'push', 'Position', [800 900 100 50], 'Text', 'FAST MODE', 'ButtonPushedFcn', @(fast_btn,event) obj.FastButtonPushed(table, itr, xl, xu, xr, errs, d, ax, next_btn));
-                    slow_btn = uibutton(view ,'push', 'Position', [1000 900 120 50], 'Text', 'SINGLE STEP MODE', 'ButtonPushedFcn', @(slow_btn, event) obj.SlowButtonPushed(next_btn)); 
+                    slow_btn = uibutton(view ,'push', 'Position', [1000 900 140 50], 'Text', 'SINGLE STEP MODE', 'ButtonPushedFcn', @(slow_btn, event) obj.SlowButtonPushed(next_btn)); 
                 end
 %             end
             wholeTime = toc(now);
@@ -169,7 +169,7 @@ classdef Bisection < handle
             ax.Title.String = 'Result plot';
             fplot(ax, variable, f, [xl(1) xu(1)], 'r-', 'LineWidth', 2);
             zoom(ax, 'on');
-            result_t = uitable('Parent', result_view,'Position', [800 100 800 700] ,'ColumnName',{'Iteration number'; 'Xl(i)'; 'Xu(i)'; 'Xr(i)'; '|Error%|'; 'f(Xr(i))'});
+            result_t = uitable('Parent', result_view,'Position', [800 200 800 500] ,'ColumnName',{'Iteration number'; 'Xl(i)'; 'Xu(i)'; 'Xr(i)'; '|Error%|'; 'f(Xr(i))'});
             result_t.Visible = 'off';
             next_btn = uibutton(result_view, 'push', 'Position', [50 900 120 50], 'Text', 'NEXT ITERATION', 'ButtonPushedFcn', @(next_btn,event) obj.NextButtonPushed(result_t, itr, xl, xu, xr, errs, d, ax));
             next_btn.Visible = 'off';

@@ -11,13 +11,13 @@ classdef Fixed_Point < handle
             err = obj.display_msg(cnv, way, x0, view);
 %             if (err == 0)
                 if (mode == "fast")
-                    obj.display_all_result(itr, root, errs, view, ax, x0);
+                    obj.display_all_result(itr, root, errs, ax, x0, table);
                 elseif (mode == 'single')
                     next_btn.Visible = 'on';
                     obj.current_row = 0;
                 else
                     fast_btn = uibutton(view,'push', 'Position', [800 900 100 50], 'Text', 'FAST MODE', 'ButtonPushedFcn', @(fast_btn,event) obj.FastButtonPushed(table, itr,root, errs, ax, next_btn, x0));
-                    slow_btn = uibutton(view ,'push', 'Position', [1000 900 120 50], 'Text', 'SINGLE STEP MODE', 'ButtonPushedFcn', @(slow_btn, event) obj.SlowButtonPushed(next_btn)); 
+                    slow_btn = uibutton(view ,'push', 'Position', [1000 900 140 50], 'Text', 'SINGLE STEP MODE', 'ButtonPushedFcn', @(slow_btn, event) obj.SlowButtonPushed(next_btn)); 
                 end
 %             end
             wholeTime = toc(now);
@@ -125,7 +125,7 @@ classdef Fixed_Point < handle
             zoom(ax, 'on');
             ax.NextPlot = 'add';
             fplot(ax, variable, y, [-10 10], 'b-', 'LineWidth', 2);
-            result_t = uitable('Parent', result_view,'Position',  [800 100 800 700] ,'ColumnName',{'Iteration number'; 'X(i)'; '|Error%|'});
+            result_t = uitable('Parent', result_view,'Position',   [800 200 800 500]  ,'ColumnName',{'Iteration number'; 'X(i)'; '|Error%|'});
             result_t.Visible = 'off';
             next_btn = uibutton(result_view, 'push', 'Position', [50 900 120 50], 'Text', 'NEXT ITERATION', 'ButtonPushedFcn', @(next_btn,event) obj.NextButtonPushed(result_t, itr, roots, errs, ax, x0));
             next_btn.Visible = 'off';
@@ -163,12 +163,14 @@ classdef Fixed_Point < handle
             end
         end
         function display_all_result(obj, itr, root, errs, ax, x0, table)
-            first_row = [0, x0, nan];
+            first_row = [0, x0, 0];
             first_row = double(first_row);
             res_data = [itr(:), root(:), errs(:)];
             res_data = double(res_data);
             all_data = [first_row; res_data];
-            table.Data = all_data;
+            all_data = double(all_data);
+            set(table, 'Data', all_data);
+            table.Visible = 'on';
             ax.NextPlot = 'add';
             plot(ax, [x0 x0], [x0 root(1)], 'k--');
             ax.NextPlot = 'add';

@@ -19,7 +19,7 @@ classdef False_Position < handle
                     obj.current_row = 1;
                 else %file
                     fast_btn = uibutton(view,'push', 'Position', [800 900 100 50], 'Text', 'FAST MODE', 'ButtonPushedFcn', @(fast_btn,event) obj.FastButtonPushed(table, itr, xl, xu, xr,yl, yu, yr, errs, ax, next_btn));
-                    slow_btn = uibutton(view ,'push', 'Position', [1000 900 120 50], 'Text', 'SINGLE STEP MODE', 'ButtonPushedFcn', @(slow_btn, event) obj.SlowButtonPushed(next_btn)); 
+                    slow_btn = uibutton(view ,'push', 'Position',[1000 900 140 50], 'Text', 'SINGLE STEP MODE', 'ButtonPushedFcn', @(slow_btn, event) obj.SlowButtonPushed(next_btn)); 
                 end
 %             end
             wholeTime = toc(now);
@@ -51,7 +51,7 @@ classdef False_Position < handle
             ax.Title.String = 'Result plot';
             fplot(ax, variable, f, [xl(1) xu(1)], 'r-', 'LineWidth', 2);
             zoom(ax, 'on');
-            result_t = uitable('Parent', result_view,'Position',  [800 100 800 700] ,'ColumnName',{'Iteration number'; 'Xl(i)'; 'Yl(i)'; 'Xu(i)'; 'Yu(i)'; 'Xr(i)'; 'Yr(i)'; '|Error%|'});
+            result_t = uitable('Parent', result_view,'Position',   [800 200 800 500]  ,'ColumnName',{'Iteration number'; 'Xl(i)'; 'Yl(i)'; 'Xu(i)'; 'Yu(i)'; 'Xr(i)'; 'Yr(i)'; '|Error%|'});
             result_t.Visible = 'off';
             next_btn = uibutton(result_view, 'push', 'Position', [50 900 120 50], 'Text', 'NEXT ITERATION', 'ButtonPushedFcn', @(next_btn,event) obj.NextButtonPushed(result_t, itr, xl, xu, xr, yl, yu, yr, errs, ax));
             next_btn.Visible = 'off';

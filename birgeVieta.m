@@ -10,7 +10,12 @@ if(type==0)
 poly = func;
 poly=string(poly);
 y= sym(char(poly));
+try
 a=sym2poly(y);
+catch
+    errordlg('Not a polynomial !!','error',[1 35]);
+    return;
+end    
 answer= getRequirements();
 [first, second,third] = answer{:};
 Xnew =str2num(first);%getIntialValue();
@@ -20,6 +25,8 @@ else
     try
     readFile(func,interval,tolerance,maxIter);
     catch
+        errordlg('error happened !!','error',[1 35]);
+        return;
     end
 end
 x=linspace(-4,8);
@@ -129,11 +136,11 @@ for i =  2: degree
 end
 c(degree+1)=0;
 Xold = Xnew;
-try 
+if(c(degree)==0)
+    errordlg('division by zero occured','error',[1 35]);
+    return;
+end 
 Xnew=Xold-(b(degree+1)/c(degree));
-catch
-     errordlg('division by zero occured','error',[1 35]);
-end
  printIteration(t,degree,a,b,c)
  itrEdit.Value=j;
  error=(abs((Xnew-Xold))/Xnew)*100;
@@ -170,12 +177,12 @@ for i =  2: degree
 end
 c(degree+1)=0;
 Xold = Xnew;
-try
-Xnew=Xold-(b(degree+1)/c(degree));
-catch
-     errordlg('division by zero occured','error',[1 35]);
-      break;
+if(c(degree)==0)
+    errordlg('division by zero occured','error',[1 35]);
+    return;
 end 
+Xnew=Xold-(b(degree+1)/c(degree));
+ 
  printIteration(t,degree,a,b,c)
  pause(1);
   error=(abs((Xnew-Xold))/Xnew)*100;
